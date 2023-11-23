@@ -18,4 +18,4 @@ bs4/
 venv/
 
 # Misc
-output.json
+*.csv
