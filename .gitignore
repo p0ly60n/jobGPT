@@ -1,0 +1,21 @@
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# BeautifulSoup
+bs4/
+
+# Logs
+*.log
+
+# Virtual environment
+venv/
+
+# Misc
+output.json
