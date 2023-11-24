@@ -26,6 +26,8 @@ if __name__ == "__main__":
         writer = csv.writer(file, delimiter=",", lineterminator="\n")
         writer.writerow(["TITLE", "COMPANY", "LOCATION", "LINK", "TEXT"])
 
+
+    # run the scraper to extract the job data from the website
     jobs = scraper.extract_data(interest, location, radius, no_of_pages)
 
     # writing the job data to the CSV-file
