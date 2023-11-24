@@ -11,10 +11,6 @@ HEADERS = {
 BASE_URL = "https://www.stepstone.de"
 
 def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
-
-    # requesting the given URL
-    print("\nScraping...\n")
-
     # list of job instances
     jobs = []
 
