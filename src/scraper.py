@@ -62,4 +62,18 @@ def extract_specific_text(link: str):
     except IndexError:
         extras = "keine Extra Infos"
 
-    return f"Unternehmenstext:\n{company_text}\n\nAufgaben:\n{assignments}\n\nAnforderungen an den Bewerber:\n{requirements}\n\nBenefits:\n{benefits}\n\nExtras:\n{extras}"
+    return \
+        f"""Unternehmenstext:
+        {company_text}
+        
+        Aufgaben:
+        {assignments}
+        
+        Anforderungen an den Bewerber:
+        {requirements}
+        
+        Benefits:
+        {benefits}
+        
+        Extras:
+        {extras}"""
