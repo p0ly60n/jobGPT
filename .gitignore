@@ -23,3 +23,5 @@ keys.cfg
 # Misc
 *.csv
 .DS_Store
+*.txt
+*.pdf
