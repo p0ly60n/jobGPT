@@ -1,6 +1,6 @@
 import csv
 import os
-import scraper
+from src.scraper import extract_data
 
 if __name__ == "__main__":
     # search queries
@@ -28,7 +28,7 @@ if __name__ == "__main__":
 
 
     # run the scraper to extract the job data from the website
-    jobs = scraper.extract_data(interest, location, radius, no_of_pages)
+    jobs = extract_data(interest, location, radius, no_of_pages)
 
     # writing the job data to the CSV-file
     for job in jobs:
