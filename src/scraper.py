@@ -10,7 +10,7 @@ HEADERS = {
 
 BASE_URL = "https://www.stepstone.de"
 
-def extract_data(interest, location, radius, no_of_pages):
+def extract_data(interest: str, location: str, radius: int, no_of_pages:int = 1):
 
     # requesting the given URL
     print("\nScraping...\n")
@@ -44,7 +44,7 @@ def extract_data(interest, location, radius, no_of_pages):
     return jobs
 
 
-def extract_specific_text(link):
+def extract_specific_text(link: str):
     response = requests.get(link, headers=HEADERS, timeout=5)
     assert response.ok
 

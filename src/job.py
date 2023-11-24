@@ -1,7 +1,7 @@
 import csv
 
 class Job:
-    def __init__(self, job_title, job_company, job_location, job_link, job_text):
+    def __init__(self, job_title: str, job_company: str, job_location: str, job_link: str, job_text: str):
         self.job_title = job_title
         self.job_company = job_company
         self.job_location = job_location
@@ -24,7 +24,7 @@ class Job:
         Text:
         {self.job_text}'''
 
-    def write_to_file(self, file_path):
+    def write_to_file(self, file_path: str):
         # writing to the CSV-file
         with open(file_path, mode="w", encoding="utf8") as file:
             writer = csv.writer(file, delimiter=",", lineterminator="\n")

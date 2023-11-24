@@ -1,5 +1,6 @@
 import csv
 import os
+
 from src.scraper import extract_data
 
 if __name__ == "__main__":
