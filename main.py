@@ -1,8 +1,9 @@
 import csv
 import os
+from pypdf import PdfReader
 
-from src.scraper import extract_data
-from src.gpt import get_letter
+import src.scraper as scraper
+import src.gpt as gpt
 
 if __name__ == "__main__":
     # search queries
@@ -10,6 +11,7 @@ if __name__ == "__main__":
     location = input("Location: ").strip().replace(" ", "+")
     radius = int(input("Radius: "))
     no_of_jobs = int(input("#Jobs: "))
+    pdf_file = input("Resume-File <.pdf> (leave blank if none available): ").strip()
 
     # Creating the Main Directory
     directory = os.getcwd() + "/"
@@ -26,15 +28,29 @@ if __name__ == "__main__":
         writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
         writer.writerow(["TITLE", "COMPANY", "LOCATION", "LINK"])
 
+    print("\nScraping...\n")
 
     # run the scraper to extract the job data from the website
-    jobs = extract_data(interest, location, radius, no_of_jobs)
+    jobs = scraper.extract_data(interest, location, radius, no_of_jobs)
 
     # writing the job data to the CSV-file
     for job in jobs:
         job.write_to_file(f"{directory}/output/{csv_file_name}")
 
+    # if a resume is available, extract the text from it
+
+    print("\nExtracting data of .pdf file if given...\n")
+
+    personal_info = ""
+    if (pdf_file != ""):
+        reader = PdfReader(pdf_file)
+        for page in reader.pages:
+            personal_info += page.extract_text()
+
+    print("\nGenerating Cover-Letter...\n")
+
     for idx, job in enumerate(jobs):
         with open(f"{directory}/output/job{idx}.txt", mode="w", encoding="utf8") as txt_file:
             # get the resume
-            txt_file.write(get_letter(job))
+            txt_file.write(gpt.get_letter(job, personal_info))
+            print(f"Cover-Letter for job{idx} ({job}) generated!")

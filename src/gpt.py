@@ -3,7 +3,7 @@ from openai import OpenAI
 
 from src.job import Job
 
-def get_letter(job: Job):
+def get_letter(job: Job, personal_info: str = ""):
     # loading the config file
     config = ConfigParser()
     config.read("keys.cfg")
@@ -16,11 +16,14 @@ def get_letter(job: Job):
         messages=[
             {
                 "role": "system",
-                "content": "Du bist ein Ersteller eines Anschreibens und formulierst ein passendes Anschreiben für die Stelle die dir gegeben wird."
+                "content": "Du bist ein Ersteller eines Anschreibens und \
+                    formulierst ein passendes Anschreiben für die Stelle die dir gegeben wird, \
+                    wobei die Fähigkeiten, Profil und Erfolge die im Lebenslauf vorhanden sind, \
+                    mit eingebracht wird und auf die Stelle bezogen wird"
             },
             {
                 "role": "user",
-                "content": f"Erstelle das Anschreiben für diese Stelle: \n{job.formatted()}"
+                "content": f"Erstelle das Anschreiben für diese Stelle: \n{job.formatted()}. \n\Der Lebenslauf und die Fähigkeiten: \n{personal_info}"
             }
         ],
         max_tokens=1024,
