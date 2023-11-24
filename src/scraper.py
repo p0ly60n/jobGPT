@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 
 from job import Job
 
-headers = {
+HEADERS = {
     "User-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
 }
 
@@ -20,7 +20,7 @@ def extract_data(interest, location, radius, no_of_pages):
 
     for page in range(no_of_pages):
         url = f"{BASE_URL}/jobs/{interest}/in-{location}?radius={radius}/page={page + 1}"
-        response = requests.get(url, headers=headers, timeout=5)
+        response = requests.get(url, headers=HEADERS, timeout=5)
 
         # assert that the request was successful and returned with error code < 400
         assert response.ok
@@ -45,7 +45,7 @@ def extract_data(interest, location, radius, no_of_pages):
 
 
 def extract_specific_text(link):
-    response = requests.get(link, headers=headers, timeout=5)
+    response = requests.get(link, headers=HEADERS, timeout=5)
     assert response.ok
 
     soup = BeautifulSoup(response.text, "html.parser")
