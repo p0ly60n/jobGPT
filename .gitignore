@@ -17,6 +17,9 @@ bs4/
 # Virtual environment
 venv/
 
+# API keys
+keys.cfg
+
 # Misc
 *.csv
 .DS_Store
