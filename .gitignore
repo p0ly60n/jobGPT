@@ -19,3 +19,4 @@ venv/
 
 # Misc
 *.csv
+.DS_Store
