@@ -26,8 +26,8 @@ class Job:
 
     def write_to_file(self, file_path: str):
         # writing to the CSV-file
-        with open(file_path, mode="w", encoding="utf8") as file:
+        with open(file_path, mode="a", encoding="utf8") as file:
             writer = csv.writer(file, delimiter=",", lineterminator="\n")
             
             # Writing to CSV-file the job data
-            writer.writerow([self.job_title, self.job_company, self.job_location, self.job_link, self.job_text])
+            writer.writerow([self.job_title, self.job_company, self.job_location, self.job_link])
