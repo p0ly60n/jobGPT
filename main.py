@@ -13,15 +13,15 @@ if __name__ == "__main__":
     no_of_jobs = int(input("#Jobs: "))
     pdf_file = input("Resume-File <.pdf> (leave blank if none available): ").strip()
 
-    # Creating the Main Directory
+    # getting the working root directory
     directory = os.getcwd() + "/"
-    if not os.path.exists(directory):
-        os.mkdir(directory)
-        print(f"Directory added at {directory}")
 
-
-    # creating the CSV-file
     csv_file_name = interest.title() + "_" + location.title() + "_Jobs.csv"
+
+    # creating the output directory if it does not exist
+    if not os.path.exists(directory + "/output"):
+        os.mkdir(directory + "/output")
+        print(f"Directory added at {directory + "/output"}")
 
     # writing the labels to the CSV-file
     with open(f"{directory}/output/{csv_file_name}", mode="w", encoding="utf8") as csv_file:
