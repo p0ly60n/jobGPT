@@ -53,14 +53,31 @@ def extract_specific_text(link: str):
     soup = BeautifulSoup(response.text, "html.parser")
     text = soup.find_all("span", {"class": "listing-content-provider-14ydav7"})
 
-    company_text = text[0].text.strip()
-    assignments = text[1].text.strip()
-    requirements = text[2].text.strip()
-    benefits = text[3].text.strip()
+    try:
+        company_text = text[0].text.strip()
+    except IndexError:
+        company_text = "kein Unternehmens Text gefunden"
+        print("kein Unternehmens Text gefunden")
+    try:
+        assignments = text[1].text.strip()
+    except IndexError:
+        assignments = "keine Aufgaben gefunden"
+        print("keine Aufgaben gefunden")
+    try:
+        requirements = text[2].text.strip()
+    except IndexError:
+        requirements = "keine Anforderungen gefunden"
+        print("keine Anforderungen gefunden")
+    try:
+        benefits = text[3].text.strip()
+    except IndexError:
+        benefits = "keine Benefits gefunden"
+        print("keine Benefits gefunden")
     try:
         extras = text[4].text.strip()
     except IndexError:
-        extras = "keine Extra Infos"
+        extras = "keine Extra Infos gefunden"
+        print("keine Extra Infos gefunden")
 
     return \
         f"""Unternehmenstext:
