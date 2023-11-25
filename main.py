@@ -1,9 +1,18 @@
 import csv
 import os
+from threading import Thread
 from pypdf import PdfReader
 
 import src.scraper as scraper
 import src.gpt as gpt
+
+def start_gpt_generation_threaded(job, job_index, personal_info, directory):
+    with open(f"{directory}/output/job{job_index}@{job.job_company}.txt", mode="w", encoding="utf8") as txt_file:
+        # get the resume
+        gpt_data = gpt.get_letter(job, personal_info)
+        txt_file.write(gpt_data["message"])
+        print(f"Cover-Letter for job{job_index} ({job}) generated!")
+        print(f"-> Tokens: in:{gpt_data["input_tokens"]}, out:{gpt_data["output_tokens"]}")
 
 if __name__ == "__main__":
     # search queries
@@ -49,12 +58,11 @@ if __name__ == "__main__":
 
     print("\nGenerating Cover-Letter...\n")
 
-    for idx, job in enumerate(jobs):
-        with open(f"{directory}/output/job{idx}@{job.job_company}.txt", mode="w", encoding="utf8") as txt_file:
-            # get the resume
-            gpt_data = gpt.get_letter(job, personal_info)
-            txt_file.write(gpt_data["message"])
-            print(f"Cover-Letter for job{idx} ({job}) generated!")
-            print(f"-> Tokens: in:{gpt_data["input_tokens"]}, out:{gpt_data["output_tokens"]}")
+    # generate the cover letter for each job by using threading
+    threads = [Thread(target=start_gpt_generation_threaded, args=(job, idx, personal_info, directory)) for idx, job in enumerate(jobs)]
+    for thread in threads:
+        thread.start()
+    for thread in threads:
+        thread.join()
 
     print("\nDone!")
