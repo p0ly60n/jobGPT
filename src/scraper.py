@@ -1,6 +1,5 @@
 import os
 import requests
-from threading import Thread
 from bs4 import BeautifulSoup
 
 from src.job import Job
@@ -11,17 +10,13 @@ HEADERS = {
 
 BASE_URL = "https://www.stepstone.de"
 
-jobs = []
-
 def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
     # list of job instances
-    threads = []
+    jobs = []
 
     site_index = 1
 
-    left_jobs = no_of_jobs
-
-    while (left_jobs > 0):
+    while (len(jobs) < no_of_jobs):
         url = f"{BASE_URL}/jobs/{interest}/in-{location}?radius={radius}" + ("/page={site_index}" if site_index > 1 else "")
         response = requests.get(url, headers=HEADERS, timeout=5)
 
@@ -33,38 +28,25 @@ def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
 
         jobs_soup = soup.find_all("article", {"class": "res-j5y1mq"})
 
-        # creating a thread for each job to scrape
         for job_index, job_soup in enumerate(jobs_soup):
-            if (left_jobs > 0):
-                threads.append(Thread(target=start_scraping_threaded, args=(job_soup, job_index)))
-                left_jobs -= 1
-            else:
+            if (len(jobs) >= no_of_jobs):
                 break
+            job_id = job_soup["id"]
+            job_company = job_soup.find("div", {"class": "res-1r68twq"}).find("span", {"class": "res-btchsq"}).text.strip()
+
+            print(f"Scraping Job{job_index + 1} @ {job_company}...")
+
+            job_link = BASE_URL + "/" + job_soup.find("a", {"class": "res-y456gn"})["href"]
+            job_title = job_soup.find("div", {"class": "res-nehv70"}).text.strip()
+            job_location = job_soup.find("div", {"class": "res-qchjmw"}).find("span", {"class": "res-btchsq"}).text.strip()
+            job_text = extract_specific_text(job_link)
+
+            # Creating Job Instance and appending it to the jobs list
+            jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
         site_index += 1
 
-    # starting the threads
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
-
     return jobs
-
-
-def start_scraping_threaded(job_soup, job_index):
-    job_id = job_soup["id"]
-    job_company = job_soup.find("div", {"class": "res-1r68twq"}).find("span", {"class": "res-btchsq"}).text.strip()
-
-    print(f"Scraping Job{job_index + 1} @ {job_company}...")
-
-    job_link = BASE_URL + "/" + job_soup.find("a", {"class": "res-y456gn"})["href"]
-    job_title = job_soup.find("div", {"class": "res-nehv70"}).text.strip()
-    job_location = job_soup.find("div", {"class": "res-qchjmw"}).find("span", {"class": "res-btchsq"}).text.strip()
-    job_text = extract_specific_text(job_link)
-
-    # Creating Job Instance and appending it to the jobs list
-    jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
 
 def extract_specific_text(link: str):
