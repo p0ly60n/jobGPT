@@ -36,7 +36,7 @@ def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
 
             print(f"Scraping Job{job_index + 1} @ {job_company}...")
 
-            job_link = BASE_URL + "/" + job_soup.find("a", {"class": "res-y456gn"})["href"]
+            job_link = BASE_URL + job_soup.find("a", {"class": "res-y456gn"})["href"]
             job_title = job_soup.find("div", {"class": "res-nehv70"}).text.strip()
             job_location = job_soup.find("div", {"class": "res-qchjmw"}).find("span", {"class": "res-btchsq"}).text.strip()
             job_text = extract_specific_text(job_link)
