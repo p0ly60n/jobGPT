@@ -58,11 +58,11 @@ if __name__ == "__main__":
 
     print("\nGenerating Cover-Letter...\n")
 
-    # generate the cover letter for each job by using threading
-    threads = [Thread(target=start_gpt_generation_threaded, args=(job, idx, personal_info, directory)) for idx, job in enumerate(jobs)]
-    for thread in threads:
-        thread.start()
-    for thread in threads:
-        thread.join()
+    ## generate the cover letter for each job by using threading
+    #threads = [Thread(target=start_gpt_generation_threaded, args=(job, idx, personal_info, directory)) for idx, job in enumerate(jobs)]
+    #for thread in threads:
+    #    thread.start()
+    #for thread in threads:
+    #    thread.join()
 
     print("\nDone!")
