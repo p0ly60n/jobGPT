@@ -10,13 +10,15 @@ HEADERS = {
 
 BASE_URL = "https://www.stepstone.de"
 
+jobs = []
+
 def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
     # list of job instances
-    jobs = []
-
     site_index = 1
 
-    while (len(jobs) < no_of_jobs):
+    left_jobs = no_of_jobs
+
+    while (left_jobs > 0):
         url = f"{BASE_URL}/jobs/{interest}/in-{location}?radius={radius}" + \
             ("/page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish"
         response = requests.get(url, headers=HEADERS, timeout=5)
@@ -31,20 +33,21 @@ def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
         jobs_soup = soup.find_all("article", {"class": "res-j5y1mq"})
 
         for job_index, job_soup in enumerate(jobs_soup):
-            if (len(jobs) >= no_of_jobs):
+            if (left_jobs > 0):
+                job_id = job_soup["id"]
+                job_company = job_soup.find("div", {"class": "res-1r68twq"}).find("span", {"class": "res-btchsq"}).text.strip()
+
+                print(f"Scraping Job{job_index + 1} @ {job_company}...")
+
+                job_link = BASE_URL + job_soup.find("a", {"class": "res-y456gn"})["href"]
+                job_title = job_soup.find("div", {"class": "res-nehv70"}).text.strip()
+                job_location = job_soup.find("div", {"class": "res-qchjmw"}).find("span", {"class": "res-btchsq"}).text.strip()
+                job_text = extract_specific_text(job_link)
+
+                # Creating Job Instance and appending it to the jobs list
+                jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
+            else:
                 break
-            job_id = job_soup["id"]
-            job_company = job_soup.find("div", {"class": "res-1r68twq"}).find("span", {"class": "res-btchsq"}).text.strip()
-
-            print(f"Scraping Job{job_index + 1} @ {job_company}...")
-
-            job_link = BASE_URL + job_soup.find("a", {"class": "res-y456gn"})["href"]
-            job_title = job_soup.find("div", {"class": "res-nehv70"}).text.strip()
-            job_location = job_soup.find("div", {"class": "res-qchjmw"}).find("span", {"class": "res-btchsq"}).text.strip()
-            job_text = extract_specific_text(job_link)
-
-            # Creating Job Instance and appending it to the jobs list
-            jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
         site_index += 1
 
