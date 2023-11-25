@@ -7,7 +7,7 @@ This project scrapes [`stepstone.de`](https://www.stepstone.de) for job listings
 ## Installation
 
 1. Install the required packages using the command [`pip install -r requirements.txt`](requirements.txt).
-2. Rename the file [`keys_default.cfg`](keys_default.cfg) to `keys.cfg` and insert your OpenAI API key under [`api_key`](keys_default.cfg).
+2. Rename the file [`config_default.cfg`](config_default.cfg) to `config.cfg` and insert your OpenAI API key under [`api_key`](config_default.cfg). Also change the used GPT-Model to the one you like (e.g. gpt-3.5-turbo [default], gpt-4)
 
 ## Usage
 
