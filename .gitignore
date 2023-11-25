@@ -17,8 +17,8 @@ bs4/
 # Virtual environment
 venv/
 
-# API keys
-keys.cfg
+# API keys + config files
+config.cfg
 
 # Misc
 *.csv
