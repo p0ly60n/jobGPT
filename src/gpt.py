@@ -29,8 +29,10 @@ def get_letter(job: Job, personal_info: str = ""):
             }
         ],
         max_tokens=1024,
+        timeout=30
     )
 
-    print(f"Used Tokens: {response.usage.total_tokens}")
-
-    return response.choices[0].message.content
+    return \
+        {"message": response.choices[0].message.content, \
+        "input_tokens": response.usage.prompt_tokens, \
+        "output_tokens": response.usage.completion_tokens}

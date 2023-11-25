@@ -50,7 +50,11 @@ if __name__ == "__main__":
     print("\nGenerating Cover-Letter...\n")
 
     for idx, job in enumerate(jobs):
-        with open(f"{directory}/output/job{idx}.txt", mode="w", encoding="utf8") as txt_file:
+        with open(f"{directory}/output/job{idx}@{job.job_company}.txt", mode="w", encoding="utf8") as txt_file:
             # get the resume
-            txt_file.write(gpt.get_letter(job, personal_info))
+            gpt_data = gpt.get_letter(job, personal_info)
+            txt_file.write(gpt_data["message"])
             print(f"Cover-Letter for job{idx} ({job}) generated!")
+            print(f"-> Tokens: in:{gpt_data["input_tokens"]}, out:{gpt_data["output_tokens"]}")
+
+    print("\nDone!")
