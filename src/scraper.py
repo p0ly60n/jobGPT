@@ -17,11 +17,13 @@ def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
     site_index = 1
 
     while (len(jobs) < no_of_jobs):
-        url = f"{BASE_URL}/jobs/{interest}/in-{location}?radius={radius}" + ("/page={site_index}" if site_index > 1 else "")
+        url = f"{BASE_URL}/jobs/{interest}/in-{location}?radius={radius}" + \
+            ("/page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish"
         response = requests.get(url, headers=HEADERS, timeout=5)
 
-        # assert that the request was successful and returned with error code < 400
-        assert response.ok
+        # log the error if the response is not ok
+        if (response.status_code != 200):
+            print(f"Error: {response.status_code} - {response.reason} for summary-url: {url}")
 
         # Scrapping the contents of the url for needed information
         soup = BeautifulSoup(response.text, "html.parser")
@@ -51,7 +53,10 @@ def extract_data(interest: str, location: str, radius: int, no_of_jobs:int = 1):
 
 def extract_specific_text(link: str):
     response = requests.get(link, headers=HEADERS, timeout=5)
-    assert response.ok
+
+    # log the error if the response is not ok
+    if (response.status_code != 200):
+        print(f"Error: {response.status_code} - {response.reason} for specific job-listing: {link}")
 
     soup = BeautifulSoup(response.text, "html.parser")
     text = soup.find_all("span", {"class": "listing-content-provider-14ydav7"})
