@@ -41,7 +41,8 @@ if __name__ == "__main__":
 
     print("\nScraping...\n")
     # run the scraper to extract the job data from the website
-    jobs = scraper.extract_data(interest, location, radius, no_of_jobs)
+    stepstone_scraper = scraper.StepstoneScraper(interest, location, radius, no_of_jobs)
+    jobs = stepstone_scraper.scrape()
 
 
     # writing the job data to the CSV-file
