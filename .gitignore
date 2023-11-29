@@ -25,3 +25,6 @@ config.cfg
 .DS_Store
 *.txt
 *.pdf
+test.txt
+test.py
+test.html
