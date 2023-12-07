@@ -76,7 +76,7 @@ class StepstoneScraper (Scraper):
 
     def get_url(self, site_index) -> str:
         return f"{self.BASE_URL}/jobs/{self.interest}/in-{self.location}?radius={self.radius}" + \
-                ("/page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish"
+                ("&page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish&rsearch=3"
 
     def get_job_elements(self, soup: BeautifulSoup) -> BeautifulSoup:
         return soup.find_all("article", {"class": "res-j5y1mq"})
