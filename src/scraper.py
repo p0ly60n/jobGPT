@@ -1,21 +1,21 @@
 import os
-import requests
-from bs4 import BeautifulSoup
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.by import By
+
 from abc import ABC, abstractmethod
 
 from src.job import Job
 
 
 class Scraper (ABC):
-    HEADERS = {
-        "User-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Safari/537.36"
-    }
     def __init__(self, interest: str, location: str, radius: int, no_of_jobs: int):
         self.interest = interest
         self.location = location
         self.radius = radius
         self.no_of_jobs = no_of_jobs
         self.jobs = []
+        self.browser = None
 
     @classmethod
     @property
@@ -24,116 +24,110 @@ class Scraper (ABC):
         pass
     
     @abstractmethod
-    def get_url(self, site_index) -> str:
-        pass
-    
-    @abstractmethod
-    def get_job_by_info(self, job_soup, job_index) -> Job:
+    def get_summary_url(self, site_index) -> str:
         pass
 
     @abstractmethod
-    def get_job_elements(self, soup) -> BeautifulSoup:
+    def get_job_urls(self) -> list[str]:
+        pass
+    
+    @abstractmethod
+    def get_job(self, url) -> Job:
         pass
     
     def scrape(self) -> list[Job]:
+        options = Options()
+        options.headless = True
+        options.add_argument("--window-size=1920,1080")
+
+        self.browser = webdriver.Chrome(options=options)
         # list of job instances
         site_index = 1
 
         left_jobs = self.no_of_jobs
 
         while (left_jobs > 0):
-            url = self.get_url(site_index)
-            response = requests.get(url, headers=self.HEADERS, timeout=5)
-
-            # log the error if the response is not ok
-            self.check_status(response)
+            url = self.get_summary_url(site_index)
+            self.browser.get(url)
+            self.browser.implicitly_wait(5)
+            self.browser.find_element(By.CSS_SELECTOR, "div#ccmgt_explicit_accept").click()
+            assert self.interest in self.browser.title
 
             # Scrapping the contents of the url for needed information
-            job_elements = self.get_job_elements(BeautifulSoup(response.text, "html.parser"))
+            job_urls = self.get_job_urls()
 
-            for job_index, job_soup in enumerate(job_elements):
+            for job_index, job_url in enumerate(job_urls):
                 if (left_jobs > 0):
-                    self.get_job_by_info(job_soup, job_index)
+                    print(f"Scraping Job{job_index}...")
+                    self.get_job(job_url)
                     left_jobs -= 1
                 else:
                     break
 
             site_index += 1
 
+        self.browser.quit()
+
         return self.jobs
 
-    def check_status(self, response: requests.Response) -> bool:
-        if (response.status_code != 200):
-            print(f"Error: {response.status_code} - {response.reason} for summary-url: {response.url}")
-            return False
-        else:
-            return True
+
+
+###################################################################################################
 
 
 
 class StepstoneScraper (Scraper):
     BASE_URL = "https://www.stepstone.de"
 
-    def get_url(self, site_index) -> str:
+    def get_summary_url(self, site_index) -> str:
         return f"{self.BASE_URL}/jobs/{self.interest}/in-{self.location}?radius={self.radius}" + \
                 ("&page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish&rsearch=3"
 
-    def get_job_elements(self, soup: BeautifulSoup) -> BeautifulSoup:
-        return soup.find_all("article", {"class": "res-j5y1mq"})
+    def get_job_urls(self) -> list:
+        element = self.browser.find_elements(By.CSS_SELECTOR, "a.res-y456gn")
+        return [x.get_attribute("href") for x in element]
 
-    def get_job_by_info(self, job_soup, job_index):
-        job_id = job_soup["id"]
-        job_company = job_soup.find("div", {"class": "res-1r68twq"}).find("span", {"class": "res-btchsq"}).text.strip()
-
-        print(f"Scraping Job{job_index} @ {job_company}...")
-
-        job_link = self.BASE_URL + job_soup.find("a", {"class": "res-y456gn"})["href"]
-        job_title = job_soup.find("div", {"class": "res-nehv70"}).text.strip()
-        job_location = job_soup.find("div", {"class": "res-qchjmw"}).find("span", {"class": "res-btchsq"}).text.strip()
-        job_text = self.extract_joblisting(job_link)
+    def get_job(self, url) -> Job:
+        self.browser.get(url)
+        job_company = self.browser.find_element(By.CSS_SELECTOR, "span.listing-content-provider-lxa6ue").text.strip()
+        job_link = url
+        job_title = self.browser.find_element(By.CSS_SELECTOR, "span.listing-content-provider-bewwo").text.strip()
+        job_location = self.browser.find_element(By.CSS_SELECTOR, "span.listing-content-provider-1whr5zf").text.strip()
+        job_text = self.extract_joblisting()
 
         # Creating Job Instance and appending it to the jobs list
         self.jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
-
-    def extract_joblisting(self, link: str):
-        response = requests.get(link, headers=self.HEADERS, timeout=5)
-
-        # log the error if the response is not ok
-        if (response.status_code != 200):
-            print(f"Error: {response.status_code} - {response.reason} for specific job-listing: {link}")
-
-        soup = BeautifulSoup(response.text, "html.parser")
-        text = soup.find_all("span", {"class": "listing-content-provider-14ydav7"})
+    def extract_joblisting(self) -> str:
+        element_list = self.browser.find_elements(By.CSS_SELECTOR, "span.listing-content-provider-14ydav7")
 
         try:
-            company_text = text[0].text.strip()
+            company_text = element_list[0].text.strip()
         except IndexError:
             company_text = "kein Unternehmens Text gefunden"
             print("-> kein Unternehmens Text gefunden")
         try:
-            assignments = text[1].text.strip()
+            assignments = element_list[1].text.strip()
         except IndexError:
             assignments = "keine Aufgaben gefunden"
             print("-> keine Aufgaben gefunden")
         try:
-            requirements = text[2].text.strip()
+            requirements = element_list[2].text.strip()
         except IndexError:
             requirements = "keine Anforderungen gefunden"
             print("-> keine Anforderungen gefunden")
         try:
-            benefits = text[3].text.strip()
+            benefits = element_list[3].text.strip()
         except IndexError:
             benefits = "keine Benefits gefunden"
             print("-> keine Benefits gefunden")
-        try:
-            extras = text[4].text.strip()
-        except IndexError:
-            extras = "keine Extra Infos gefunden"
-            print("-> keine Extra Infos gefunden")
+        #try:
+        #    extras = element_list[4].text.strip()
+        #except IndexError:
+        #    extras = "keine Extra Infos gefunden"
+        #    print("-> keine Extra Infos gefunden")
 
-        return \
-            f"""Unternehmenstext:
+        return f"""Unternehmenstext:
             {company_text}
             
             Aufgaben:
@@ -143,7 +137,4 @@ class StepstoneScraper (Scraper):
             {requirements}
             
             Benefits:
-            {benefits}
-            
-            Extras:
-            {extras}"""
+            {benefits}"""
