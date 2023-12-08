@@ -44,12 +44,14 @@ class GUI:
     def display_jobs(self):
         job_window = Toplevel(self.master)
         job_window.resizable(width=False, height=False)
+        job_window.title("Jobs")
 
         Label(job_window, text="RESUME?").grid(row=0, column=0, padx=40, sticky="WE")
         Label(job_window, text="TITLE").grid(row=0, column=1, padx=40, sticky="WE")
         Label(job_window, text="COMPANY").grid(row=0, column=2, padx=40, sticky="WE")
         Label(job_window, text="LOCATION").grid(row=0, column=3, padx=40, sticky="WE")
         Label(job_window, text="LINK").grid(row=0, column=4, padx=40, sticky="WE")
+
 
         for idx, job in enumerate(self.jobs, start=0):
             var = IntVar()
@@ -61,6 +63,8 @@ class GUI:
             link = Label(job_window, text="click here", fg="blue")
             link.grid(row=idx+1, column=4)
             link.bind("<Button-1>", lambda e: self.callback)
+
+        Button(job_window, text="Generate", command=self.generate_letter).grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5, sticky="E")
 
     def save_csv(self):
         with open(f"{self.directory}/output/{self.csv_file_name}", mode="w", encoding="utf8") as csv_file:
@@ -95,6 +99,7 @@ class GUI:
 
     def __init__(self):
         self.master = Tk()
+        self.master.title("Job-Scraper")
 
         Label(self.master, text="Interest").grid(row=0)
         Label(self.master, text="Location").grid(row=1)
@@ -114,8 +119,7 @@ class GUI:
         self.no_of_jobs_field.grid(row=3, column=1)
         self.cover_letter_field.grid(row=4, column=1)
 
-        Button(self.master, text="Scrape", command=self.scrape).grid(row=5, column=0, sticky="WE", pady=4)
-        Button(self.master, text="Generate", command=self.generate_letter).grid(row=5, column=1, sticky="WE", pady=4)
+        Button(self.master, text="Scrape", command=self.scrape).grid(row=5, column=1, padx=5, pady=5, sticky="E")
 
         # getting the working root directory
         self.directory = os.getcwd() + "/"
