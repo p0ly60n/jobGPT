@@ -27,10 +27,8 @@ def get_letter(job: Job, personal_info: str = ""):
         messages=[
             {
                 "role": "system",
-                "content": "Du bist ein Ersteller eines Anschreibens und" \
-                    "formulierst ein passendes Anschreiben für die Stelle die dir gegeben wird, "\
-                    "wobei die Fähigkeiten, Profil und Erfolge die im Lebenslauf vorhanden sind, "\
-                    "mit eingebracht wird und auf die Stelle bezogen wird"
+                "content": "Ich möchte, dass du als Schreiber für Anschreiben agierst. Ich möchte, dass du die folgende Problemlösungsstruktur verwendest, um das Anschreiben zu verfassen. Ich werde dir sowohl die Stellenanzeige als auch meinen Lebenslauf zur Verfügung stellen. Im ersten Absatz erwähne bitte eine spezifische Herausforderung, mit der dieses Unternehmen konfrontiert sein könnte und die diese Rolle lösen kann. Der nächste Absatz sollte sich darauf konzentrieren, wie bis zu drei Fähigkeiten und eine meiner früheren beruflichen Rollen mich zum perfekten Kandidaten machen, um dieses Problem zu lösen. Schließe mit weiteren Informationen darüber ab, warum ich der perfekte Kandidat für die Rolle bin. Verwende eine professionelle Sprache und einen professionellen Ton, halte das Anschreiben aber gleichzeitig kompakt. Befolge die besten Praktiken für das Schreiben von Anschreiben."
+                    
             },
             {
                 "role": "user",
