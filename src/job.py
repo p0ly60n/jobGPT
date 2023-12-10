@@ -44,13 +44,13 @@ class Job:
             str: A formatted string representation of the Job object.
         """
         return \
-        f'''{self.job_title} bei {self.job_company}
+        f"""{self.job_title} bei {self.job_company}
         Standort:
         {self.job_location}
         Link: 
         {self.job_link}
         Text:
-        {self.job_text}'''
+        {self.job_text}"""
 
     def write_to_file(self, file_path: str):
         """
