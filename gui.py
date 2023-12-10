@@ -11,7 +11,10 @@ import src.gpt as gpt
 from src.job import Job
 
 class GUI:
+    """A graphical user interface for a job scraper and cover letter generator."""
+
     def scrape(self):
+        """Scrapes job data from a website based on user input and saves it to a CSV file."""
         interest = self.interest_field.get().strip().replace(" ", "+")
         location = self.location_field.get().strip().replace(" ", "+")
         radius = int(self.radius_field.get())
@@ -35,6 +38,7 @@ class GUI:
         self.display_jobs()
 
     def extract_personal_info(self, cover_letter_file):
+        """Extracts personal information from a cover letter PDF file."""
         # if a resume is available, extract the text from it
         if (cover_letter_file != ""):
             reader = PdfReader(cover_letter_file)
@@ -42,6 +46,7 @@ class GUI:
                 self.personal_info += page.extract_text()
 
     def display_jobs(self):
+        """Displays the scraped job data in a new window."""
         job_window = Toplevel(self.master)
         job_window.resizable(width=False, height=False)
         job_window.title("Jobs")
@@ -67,6 +72,7 @@ class GUI:
         Button(job_window, text="Generate", command=self.generate_letter).grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5, sticky="E")
 
     def save_csv(self):
+        """Saves the scraped job data to a CSV file."""
         with open(f"{self.directory}/output/{self.csv_file_name}", mode="w", encoding="utf8") as csv_file:
             writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
             writer.writerow(["TITLE", "COMPANY", "LOCATION", "LINK"])
@@ -75,18 +81,20 @@ class GUI:
             job.write_to_file(f"{self.directory}/output/{self.csv_file_name}")
 
     def callback(self, link):
+        """Opens a web browser with the provided link."""
         webbrowser.open_new(link)
 
     def start_gpt_generation_threaded(self, job, job_index, personal_info):
+        """Generates a cover letter using GPT-3 for a specific job in a separate thread."""
         with open(f"{self.directory}/output/job{job_index}@{job.job_company}.txt", mode="w", encoding="utf8") as txt_file:
             # get the resume
             gpt_data = gpt.get_letter(job, personal_info)
             txt_file.write(gpt_data["message"])
             print(f"Cover-Letter for job{job_index} ({job}) generated!")
-            print(f"-> Tokens: in:{gpt_data["input_tokens"]}, out:{gpt_data["output_tokens"]}")
-
+            print(f"-> Tokens: in:{gpt_data['input_tokens']}, out:{gpt_data['output_tokens']}")
 
     def generate_letter(self):
+        """Generates cover letters for selected jobs using GPT-3."""
         threads = []
         for idx, job in enumerate(self.jobs, start=0):     
             if self.selected[idx].get() == 1:
@@ -96,8 +104,8 @@ class GUI:
         for thread in threads:
             thread.join()
 
-
     def __init__(self):
+        """Initializes the GUI and sets up the main window."""
         self.master = Tk()
         self.master.title("Job-Scraper")
 
@@ -126,7 +134,7 @@ class GUI:
         # creating the output directory if it does not exist
         if not os.path.exists(self.directory + "/output"):
             os.mkdir(self.directory + "/output")
-            print(f"Directory added at {self.directory + "/output"}")
+            print(f"Directory added at {self.directory + '/output'}")
 
         self.csv_file_name = ""
         self.personal_info = ""

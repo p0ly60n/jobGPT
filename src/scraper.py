@@ -10,7 +10,20 @@ from selenium.common.exceptions import NoSuchElementException
 
 
 class Scraper (ABC):
+    """
+    Abstract base class for web scraping job listings.
+    """
+
     def __init__(self, interest: str, location: str, radius: int, no_of_jobs: int):
+        """
+        Initializes the Scraper object.
+
+        Parameters:
+        - interest (str): The job interest or keyword.
+        - location (str): The job location.
+        - radius (int): The search radius in kilometers.
+        - no_of_jobs (int): The number of jobs to scrape.
+        """
         self.interest = interest
         self.location = location
         self.radius = radius
@@ -21,49 +34,75 @@ class Scraper (ABC):
     @classmethod
     @property
     @abstractmethod
-    def BASE_URL(self) -> str:
-        pass
-    
+    def BASE_URL(cls) -> str:
+        """
+        The base URL of the job listing website.
+        """
+
     @abstractmethod
-    def get_summary_url(self, site_index) -> str:
-        pass
+    def get_display_url(self, site_index: int) -> str:
+        """
+        Returns the URL of the job display page for a given site index.
+
+        Parameters:
+        - site_index (int): The index of the job display page.
+
+        Returns:
+        - str: The URL of the job display page.
+        """
 
     @abstractmethod
     def get_job_urls(self) -> list[str]:
-        pass
-    
+        """
+        Returns a list of job URLs on the current job display page.
+
+        Returns:
+        - list[str]: A list of job URLs.
+        """
+
     @abstractmethod
-    def get_job(self, url) -> Job:
-        pass
+    def extract_job(self, url):
+        """
+        Scrapes the job details from a given job url and appends it to "jobs".
+
+        Parameters:
+        - url (str): The URL of the job listing.
+        """
 
     def click_to_enter(self):
-        pass
+        """
+        Performs any necessary actions to enter the job listing page.
+        """
+        return
     
     def scrape(self) -> list[Job]:
+        """
+        Scrapes the job listings and returns a list of Job objects.
+
+        Returns:
+        - list[Job]: A list of Job objects representing the scraped job listings.
+        """
         options = Options()
         options.headless = True
         options.add_argument("--window-size=1920,1080")
 
         self.browser = webdriver.Chrome(options=options)
-        # list of job instances
         site_index = 1
-
         left_jobs = self.no_of_jobs
 
         while (left_jobs > 0):
-            url = self.get_summary_url(site_index)
+            url = self.get_display_url(site_index)
             self.browser.get(url)
             self.browser.implicitly_wait(5)
             self.click_to_enter()
             assert self.interest in self.browser.title
 
-            # Scrapping the contents of the url for needed information
             job_urls = self.get_job_urls()
 
             for job_index, job_url in enumerate(job_urls):
                 if (left_jobs > 0):
                     print(f"Scraping Job{job_index}...")
-                    self.get_job(job_url)
+                    self.extract_job(job_url)
                     left_jobs -= 1
                 else:
                     break
@@ -75,15 +114,14 @@ class Scraper (ABC):
         return self.jobs
 
 
-
-#####################################################################################################
-
-
-
 class StepstoneScraper (Scraper):
+    """
+    Scraper implementation for Stepstone job listings.
+    """
+
     BASE_URL = "https://www.stepstone.de"
 
-    def get_summary_url(self, site_index) -> str:
+    def get_display_url(self, site_index) -> str:
         return f"{self.BASE_URL}/jobs/{self.interest}/in-{self.location}?radius={self.radius}" + \
                 (f"&page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish&rsearch=3"
 
@@ -91,7 +129,7 @@ class StepstoneScraper (Scraper):
         element = self.browser.find_elements(By.CSS_SELECTOR, "a.res-y456gn")
         return [x.get_attribute("href") for x in element]
 
-    def get_job(self, url) -> Job:
+    def extract_job(self, url):
         self.browser.get(url)
         job_company = self.browser.find_element(By.CSS_SELECTOR, "span.listing-content-provider-lxa6ue").text.strip()
         job_link = url
@@ -99,10 +137,15 @@ class StepstoneScraper (Scraper):
         job_location = self.browser.find_element(By.CSS_SELECTOR, "span.listing-content-provider-1whr5zf").text.strip()
         job_text = self.extract_joblisting()
 
-        # Creating Job Instance and appending it to the jobs list
         self.jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
     def extract_joblisting(self) -> str:
+        """
+        Extracts the job listing details from the current page.
+
+        Returns:
+        - str: The extracted job listing details.
+        """
         element_list = self.browser.find_elements(By.CSS_SELECTOR, "span.listing-content-provider-14ydav7")
 
         try:
@@ -145,15 +188,14 @@ class StepstoneScraper (Scraper):
             pass
 
 
-
-#####################################################################################################
-
-
-
 class IndeedScraper (Scraper):
+    """
+    Scraper implementation for Indeed job listings.
+    """
+
     BASE_URL = "https://de.indeed.com"
 
-    def get_summary_url(self, site_index) -> str:
+    def get_display_url(self, site_index) -> str:
         return f"{self.BASE_URL}/jobs?q={self.interest}&l={self.location}&radius={self.radius}" + \
                 f"&start={site_index}"
 
@@ -161,7 +203,7 @@ class IndeedScraper (Scraper):
         element = self.browser.find_elements(By.CSS_SELECTOR, "a[class='jcs-JobTitle css-jspxzf eu4oa1w0']")
         return [x.get_attribute("href") for x in element]
 
-    def get_job(self, url) -> Job:
+    def extract_job(self, url):
         self.browser.get(url)
         job_company = self.browser.find_element(By.CSS_SELECTOR, "span.css-1cxc9zk.e1wnkr790").text.strip()
         job_link = url
@@ -169,10 +211,15 @@ class IndeedScraper (Scraper):
         job_location = self.browser.find_element(By.CSS_SELECTOR, "div.css-6z8o9s.eu4oa1w0").text.strip()
         job_text = self.extract_joblisting()
 
-        # Creating Job Instance and appending it to the jobs list
         self.jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
     def extract_joblisting(self) -> str:
+        """
+        Extracts the job listing details from the current page.
+
+        Returns:
+        - str: The extracted job listing details.
+        """
         return self.browser.find_element(By.CSS_SELECTOR, "div#jobDescriptionText").text.strip()
 
     def click_to_enter(self):

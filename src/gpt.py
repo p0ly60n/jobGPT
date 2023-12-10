@@ -4,6 +4,16 @@ from openai import OpenAI
 from src.job import Job
 
 def get_letter(job: Job, personal_info: str = ""):
+    """
+    Generates a cover letter for a given job using OpenAI's chat completions API.
+
+    Args:
+        job (Job): The job object containing the job details.
+        personal_info (str, optional): The personal information to be included in the letter. Defaults to "".
+
+    Returns:
+        dict: A dictionary containing the generated cover letter, input tokens used, and output tokens used.
+    """
     # loading the config file
     config = ConfigParser()
     config.read("config.cfg")
