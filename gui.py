@@ -9,6 +9,7 @@ import webbrowser
 import src.scraper as scraper
 import src.gpt as gpt
 from src.job import Job
+from tkinter import filedialog
 
 class GUI:
     """A graphical user interface for a job scraper and cover letter generator."""
@@ -19,11 +20,11 @@ class GUI:
         location = self.location_field.get().strip().replace(" ", "%20")
         radius = int(self.radius_field.get())
         no_of_jobs = int(self.no_of_jobs_field.get())
-        cover_letter_file = self.cover_letter_field.get()
+        resume_file = self.resume_file
 
-        print(f"\nExtracting data of {cover_letter_file}...\n")
-        self.extract_personal_info(cover_letter_file)
-        
+        print(f"\nExtracting data of {resume_file}...\n")
+        self.extract_personal_info(resume_file)
+
         print("\nScraping...\n")
 
         # create a scraper object based on the user's choice
@@ -44,11 +45,11 @@ class GUI:
 
         self.display_jobs()
 
-    def extract_personal_info(self, cover_letter_file):
+    def extract_personal_info(self, resume_file):
         """Extracts personal information from a cover letter PDF file."""
         # if a resume is available, extract the text from it
-        if (cover_letter_file != ""):
-            reader = PdfReader(cover_letter_file)
+        if (resume_file != ""):
+            reader = PdfReader(resume_file)
             for page in reader.pages:
                 self.personal_info += page.extract_text()
 
@@ -109,6 +110,13 @@ class GUI:
         for thread in threads:
             thread.join()
 
+    def file_open(self):
+        """Opens a file dialog to select a file."""
+        filename = filedialog.askopenfilename(initialdir=self.directory, title="Select a file", filetypes=(("PDF files", "*.pdf"), ("all files", "*.*")))
+        self.resume_field.config(text=os.path.basename(filename))
+        self.resume_file = filename
+
+
     def __init__(self):
         """Initializes the GUI and sets up the main window."""
         self.master = Tk()
@@ -122,20 +130,20 @@ class GUI:
         Label(self.master, text="Location").grid(row=1)
         Label(self.master, text="Radius").grid(row=2)
         Label(self.master, text="#Jobs").grid(row=3)
-        Label(self.master, text="Cover-Letter").grid(row=4)
+        Label(self.master, text="Resume").grid(row=4)
         Label(self.master, text="Website").grid(row=5)
 
         self.interest_field = Entry(self.master)
         self.location_field = Entry(self.master)
         self.radius_field = Entry(self.master)
         self.no_of_jobs_field = Entry(self.master)
-        self.cover_letter_field = Entry(self.master)
+        self.resume_field = Button(self.master, text="Choose File", command=self.file_open)
 
         self.interest_field.grid(row=0, column=1)
         self.location_field.grid(row=1, column=1)
         self.radius_field.grid(row=2, column=1)
         self.no_of_jobs_field.grid(row=3, column=1)
-        self.cover_letter_field.grid(row=4, column=1)
+        self.resume_field.grid(row=4, column=1)
 
         OptionMenu(self.master, self.website_choice, *self.website_choices).grid(row=5, column=1, padx=5, pady=5)
 
@@ -152,5 +160,6 @@ class GUI:
         self.personal_info = ""
         self.jobs = []
         self.selected = []
+        self.resume_file = ""
 
         mainloop()
