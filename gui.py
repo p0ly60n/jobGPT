@@ -72,9 +72,7 @@ class GUI:
             Label(job_window, text=job.job_title[0:30]+"...").grid(row=idx+1, column=1, sticky="W")
             Label(job_window, text=job.job_company[0:30]+"...").grid(row=idx+1, column=2, sticky="W")
             Label(job_window, text=job.job_location[0:30]+"...").grid(row=idx+1, column=3, sticky="W")
-            link = Label(job_window, text="click here", fg="blue")
-            link.grid(row=idx+1, column=4)
-            link.bind("<Button-1>", lambda e: self.callback)
+            Button(job_window, text="Link", fg="blue", cursor="hand2", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4)
 
         Button(job_window, text="Generate", command=self.generate_letter).grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5, sticky="E")
 
