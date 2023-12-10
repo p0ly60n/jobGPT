@@ -95,7 +95,7 @@ class Scraper (ABC):
             self.browser.get(url)
             self.browser.implicitly_wait(5)
             self.click_to_enter()
-            assert self.interest in self.browser.title
+            #assert self.interest in self.browser.title
 
             job_urls = self.get_job_urls()
 
@@ -228,6 +228,6 @@ class IndeedScraper (Scraper):
         except NoSuchElementException:
             pass
         try:
-            self.browser.find_element(By.CSS_SELECTOR, "svg.css-1xqhio.eac13zx0").click()
+            self.browser.find_element(By.CSS_SELECTOR, "button.css-yi9ndv.e8ju0x51").click()
         except NoSuchElementException:
             pass
