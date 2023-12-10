@@ -6,6 +6,7 @@ from selenium.webdriver.common.by import By
 from abc import ABC, abstractmethod
 
 from src.job import Job
+from selenium.common.exceptions import NoSuchElementException
 
 
 class Scraper (ABC):
@@ -34,6 +35,9 @@ class Scraper (ABC):
     @abstractmethod
     def get_job(self, url) -> Job:
         pass
+
+    def click_to_enter(self):
+        pass
     
     def scrape(self) -> list[Job]:
         options = Options()
@@ -50,7 +54,7 @@ class Scraper (ABC):
             url = self.get_summary_url(site_index)
             self.browser.get(url)
             self.browser.implicitly_wait(5)
-            self.browser.find_element(By.CSS_SELECTOR, "div#ccmgt_explicit_accept").click()
+            self.click_to_enter()
             assert self.interest in self.browser.title
 
             # Scrapping the contents of the url for needed information
@@ -81,7 +85,7 @@ class StepstoneScraper (Scraper):
 
     def get_summary_url(self, site_index) -> str:
         return f"{self.BASE_URL}/jobs/{self.interest}/in-{self.location}?radius={self.radius}" + \
-                ("&page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish&rsearch=3"
+                (f"&page={site_index}" if site_index > 1 else "") + "&sort=2&action=sort_publish&rsearch=3"
 
     def get_job_urls(self) -> list:
         element = self.browser.find_elements(By.CSS_SELECTOR, "a.res-y456gn")
@@ -134,6 +138,12 @@ class StepstoneScraper (Scraper):
             Benefits:
             {benefits}"""
 
+    def click_to_enter(self):
+        try:
+            self.browser.find_element(By.CSS_SELECTOR, "div#ccmgt_explicit_accept").click()
+        except NoSuchElementException:
+            pass
+
 
 
 #####################################################################################################
@@ -145,55 +155,32 @@ class IndeedScraper (Scraper):
 
     def get_summary_url(self, site_index) -> str:
         return f"{self.BASE_URL}/jobs?q={self.interest}&l={self.location}&radius={self.radius}" + \
-                "&start={site_index}"
+                f"&start={site_index}"
 
     def get_job_urls(self) -> list:
-        element = self.browser.find_elements(By.CSS_SELECTOR, "a.jcs-JobTitle css-jspxzf eu4oa1w0")
+        element = self.browser.find_elements(By.CSS_SELECTOR, "a[class='jcs-JobTitle css-jspxzf eu4oa1w0']")
         return [x.get_attribute("href") for x in element]
 
     def get_job(self, url) -> Job:
         self.browser.get(url)
-        job_company = self.browser.find_element(By.CSS_SELECTOR, "div.jobsearch-InlineCompanyRating.icl-u-xs-mt--xs.jobsearch-DesktopStickyContainer-companyrating").text.strip()
+        job_company = self.browser.find_element(By.CSS_SELECTOR, "span.css-1cxc9zk.e1wnkr790").text.strip()
         job_link = url
-        job_title = self.browser.find_element(By.CSS_SELECTOR, "h3.icl-u-xs-mb--xs.icl-u-xs-mt--none.jobsearch-JobInfoHeader-title").text.strip()
-        job_location = self.browser.find_element(By.CSS_SELECTOR, "div.jobsearch-InlineCompanyRating.icl-u-xs-mt--xs.jobsearch-DesktopStickyContainer-companyrating").text.strip()
+        job_title = self.browser.find_element(By.CSS_SELECTOR, "h1.jobsearch-JobInfoHeader-title.css-1hwk56k.e1tiznh50").text.strip()
+        job_location = self.browser.find_element(By.CSS_SELECTOR, "div.css-6z8o9s.eu4oa1w0").text.strip()
         job_text = self.extract_joblisting()
 
         # Creating Job Instance and appending it to the jobs list
         self.jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
 
     def extract_joblisting(self) -> str:
-        element_list = self.browser.find_elements(By.CSS_SELECTOR, "div.jobsearch-jobDescriptionText")
+        return self.browser.find_element(By.CSS_SELECTOR, "div#jobDescriptionText").text.strip()
 
+    def click_to_enter(self):
         try:
-            company_text = element_list[0].text.strip()
-        except IndexError:
-            company_text = "kein Unternehmens Text gefunden"
-            print("-> kein Unternehmens Text gefunden")
+            self.browser.find_element(By.CSS_SELECTOR, "button#onetrust-accept-btn-handler").click()
+        except NoSuchElementException:
+            pass
         try:
-            assignments = element_list[1].text.strip()
-        except IndexError:
-            assignments = "keine Aufgaben gefunden"
-            print("-> keine Aufgaben gefunden")
-        try:
-            requirements = element_list[2].text.strip()
-        except IndexError:
-            requirements = "keine Anforderungen gefunden"
-            print("-> keine Anforderungen gefunden")
-        try:
-            benefits = element_list[3].text.strip()
-        except IndexError:
-            benefits = "keine Benefits gefunden"
-            print("-> keine Benefits gefunden")
-        
-        return f"""Unternehmenstext:
-            {company_text}
-            
-            Aufgaben:
-            {assignments}
-            
-            Anforderungen an den Bewerber:
-            {requirements}
-            
-            Benefits:
-            {benefits}"""
+            self.browser.find_element(By.CSS_SELECTOR, "svg.css-1xqhio.eac13zx0").click()
+        except NoSuchElementException:
+            pass
