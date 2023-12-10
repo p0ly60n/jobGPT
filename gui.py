@@ -15,8 +15,8 @@ class GUI:
 
     def scrape(self):
         """Scrapes job data from a website based on user input and saves it to a CSV file."""
-        interest = self.interest_field.get().strip().replace(" ", "+")
-        location = self.location_field.get().strip().replace(" ", "+")
+        interest = self.interest_field.get().strip().replace(" ", "%20")
+        location = self.location_field.get().strip().replace(" ", "%20")
         radius = int(self.radius_field.get())
         no_of_jobs = int(self.no_of_jobs_field.get())
         cover_letter_file = self.cover_letter_field.get()
@@ -25,9 +25,16 @@ class GUI:
         self.extract_personal_info(cover_letter_file)
         
         print("\nScraping...\n")
+
+        # create a scraper object based on the user's choice
+        website_scraper = None
+        match self.website_choice.get():
+            case "Stepstone": website_scraper = scraper.StepstoneScraper(interest, location, radius, no_of_jobs)
+            case "Indeed": website_scraper = scraper.IndeedScraper(interest, location, radius, no_of_jobs)
+            case _: print("Website not supported yet, edit gui.py!")
+
         # run the scraper to extract the job data from the website
-        stepstone_scraper = scraper.StepstoneScraper(interest, location, radius, no_of_jobs)
-        self.jobs = stepstone_scraper.scrape()
+        self.jobs = website_scraper.scrape()
 
         print("\nScraping done!\n")
 
@@ -109,11 +116,16 @@ class GUI:
         self.master = Tk()
         self.master.title("Job-Scraper")
 
+        self.website_choices = ["Stepstone", "Indeed"]
+        self.website_choice = StringVar(self.master)
+        self.website_choice.set(self.website_choices[0])
+
         Label(self.master, text="Interest").grid(row=0)
         Label(self.master, text="Location").grid(row=1)
         Label(self.master, text="Radius").grid(row=2)
         Label(self.master, text="#Jobs").grid(row=3)
         Label(self.master, text="Cover-Letter").grid(row=4)
+        Label(self.master, text="Website").grid(row=5)
 
         self.interest_field = Entry(self.master)
         self.location_field = Entry(self.master)
@@ -127,7 +139,9 @@ class GUI:
         self.no_of_jobs_field.grid(row=3, column=1)
         self.cover_letter_field.grid(row=4, column=1)
 
-        Button(self.master, text="Scrape", command=self.scrape).grid(row=5, column=1, padx=5, pady=5, sticky="E")
+        OptionMenu(self.master, self.website_choice, *self.website_choices).grid(row=5, column=1, padx=5, pady=5)
+
+        Button(self.master, text="Scrape", command=self.scrape).grid(row=6, column=1, padx=5, pady=5, sticky="E")
 
         # getting the working root directory
         self.directory = os.getcwd() + "/"
