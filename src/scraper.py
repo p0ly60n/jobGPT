@@ -121,12 +121,71 @@ class StepstoneScraper (Scraper):
         except IndexError:
             benefits = "keine Benefits gefunden"
             print("-> keine Benefits gefunden")
-        #try:
-        #    extras = element_list[4].text.strip()
-        #except IndexError:
-        #    extras = "keine Extra Infos gefunden"
-        #    print("-> keine Extra Infos gefunden")
 
+        return f"""Unternehmenstext:
+            {company_text}
+            
+            Aufgaben:
+            {assignments}
+            
+            Anforderungen an den Bewerber:
+            {requirements}
+            
+            Benefits:
+            {benefits}"""
+
+
+
+#####################################################################################################
+
+
+
+class IndeedScraper (Scraper):
+    BASE_URL = "https://de.indeed.com"
+
+    def get_summary_url(self, site_index) -> str:
+        return f"{self.BASE_URL}/jobs?q={self.interest}&l={self.location}&radius={self.radius}" + \
+                "&start={site_index}"
+
+    def get_job_urls(self) -> list:
+        element = self.browser.find_elements(By.CSS_SELECTOR, "a.jcs-JobTitle css-jspxzf eu4oa1w0")
+        return [x.get_attribute("href") for x in element]
+
+    def get_job(self, url) -> Job:
+        self.browser.get(url)
+        job_company = self.browser.find_element(By.CSS_SELECTOR, "div.jobsearch-InlineCompanyRating.icl-u-xs-mt--xs.jobsearch-DesktopStickyContainer-companyrating").text.strip()
+        job_link = url
+        job_title = self.browser.find_element(By.CSS_SELECTOR, "h3.icl-u-xs-mb--xs.icl-u-xs-mt--none.jobsearch-JobInfoHeader-title").text.strip()
+        job_location = self.browser.find_element(By.CSS_SELECTOR, "div.jobsearch-InlineCompanyRating.icl-u-xs-mt--xs.jobsearch-DesktopStickyContainer-companyrating").text.strip()
+        job_text = self.extract_joblisting()
+
+        # Creating Job Instance and appending it to the jobs list
+        self.jobs.append(Job(job_title, job_company, job_location, job_link, job_text))
+
+    def extract_joblisting(self) -> str:
+        element_list = self.browser.find_elements(By.CSS_SELECTOR, "div.jobsearch-jobDescriptionText")
+
+        try:
+            company_text = element_list[0].text.strip()
+        except IndexError:
+            company_text = "kein Unternehmens Text gefunden"
+            print("-> kein Unternehmens Text gefunden")
+        try:
+            assignments = element_list[1].text.strip()
+        except IndexError:
+            assignments = "keine Aufgaben gefunden"
+            print("-> keine Aufgaben gefunden")
+        try:
+            requirements = element_list[2].text.strip()
+        except IndexError:
+            requirements = "keine Anforderungen gefunden"
+            print("-> keine Anforderungen gefunden")
+        try:
+            benefits = element_list[3].text.strip()
+        except IndexError:
+            benefits = "keine Benefits gefunden"
+            print("-> keine Benefits gefunden")
+        
         return f"""Unternehmenstext:
             {company_text}
             
