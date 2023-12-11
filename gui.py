@@ -54,7 +54,7 @@ class App(ctk.CTk):
 
         ctk.CTkOptionMenu(self, variable=self.website_choice, values=self.website_choices).grid(row=5, column=1, padx=5, pady=5)
 
-        self.scrape_button = ctk.CTkButton(self, text="Scrape", command=self.scrape)
+        self.scrape_button = ctk.CTkButton(self, text="Scrape", command=self.scrape, fg_color="green", hover_color="dark green")
         self.scrape_button.grid(row=6, column=1, padx=5, pady=5)
 
         # getting the working root directory
@@ -168,12 +168,12 @@ class JobWindow(ctk.CTkToplevel):
             var = ctk.IntVar()
             self.selected.append(var)
             ctk.CTkCheckBox(self, variable=var, text="", width=30).grid(row=idx+1, column=0, padx=5, pady=5)
-            ctk.CTkLabel(self, text=job.job_title[0:30]+"...").grid(row=idx+1, column=1, sticky="W", padx=5, pady=5)
-            ctk.CTkLabel(self, text=job.job_company[0:30]+"...").grid(row=idx+1, column=2, sticky="W", padx=5, pady=5)
-            ctk.CTkLabel(self, text=job.job_location[0:30]+"...").grid(row=idx+1, column=3, sticky="W", padx=5, pady=5)
-            ctk.CTkButton(self, text="Link", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4, padx=5, pady=5)
+            ctk.CTkLabel(self, text=job.job_title[0:40] + ("..." if len(job.job_title) >= 40 else "")).grid(row=idx+1, column=1, sticky="W", padx=5, pady=5)
+            ctk.CTkLabel(self, text=job.job_company[0:40] + ("..." if len(job.job_company) >= 40 else "")).grid(row=idx+1, column=2, sticky="W", padx=5, pady=5)
+            ctk.CTkLabel(self, text=job.job_location[0:40] + ("..." if len(job.job_location) >= 40 else "")).grid(row=idx+1, column=3, sticky="W", padx=5, pady=5)
+            ctk.CTkButton(self, text="click here", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4, padx=5, pady=5)
 
-        self.generate_button = ctk.CTkButton(self, text="Generate", command=self.generate_letter)
+        self.generate_button = ctk.CTkButton(self, text="Generate", command=self.generate_letter, fg_color="green", hover_color="dark green")
         self.generate_button.grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5)
 
     def callback(self, link):
