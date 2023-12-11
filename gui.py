@@ -1,22 +1,79 @@
-from tkinter import Tk, Label, Entry, Button, OptionMenu, Toplevel, Checkbutton, StringVar, IntVar, mainloop
-from tkinter import filedialog
-from tkinter.messagebox import showinfo
-
+"""A graphical user interface for the job scraper and cover letter generator."""
+import webbrowser
 import csv
 import os
 from threading import Thread
+
+import customtkinter as ctk
+from customtkinter import filedialog
+from CTkMessagebox import CTkMessagebox
 from pypdf import PdfReader
-import webbrowser
 
 import src.scraper as scraper
 import src.gpt as gpt
-from src.job import Job
 
-class GUI:
+class App(ctk.CTk):
     """A graphical user interface for a job scraper and cover letter generator."""
+
+    def __init__(self):
+        """Initializes the GUI and sets up the main window."""
+        super().__init__()
+        self.title("Job-Scraper")
+        ctk.set_default_color_theme("blue")
+        ctk.set_appearance_mode("system")
+
+        self.website_choices = ["Stepstone", "Indeed"]
+        self.website_choice = ctk.StringVar()
+        self.website_choice.set(self.website_choices[0])
+
+        self.interest_label = ctk.CTkLabel(self, text="Interest")
+        self.location_label = ctk.CTkLabel(self, text="Location")
+        self.radius_label = ctk.CTkLabel(self, text="Radius")
+        self.no_of_jobs_label = ctk.CTkLabel(self, text="#Jobs")
+        self.resume_label = ctk.CTkLabel(self, text="Resume")
+        self.website_label = ctk.CTkLabel(self, text="Website")
+
+        self.interest_field = ctk.CTkEntry(self)
+        self.location_field = ctk.CTkEntry(self)
+        self.radius_field = ctk.CTkEntry(self)
+        self.no_of_jobs_field = ctk.CTkEntry(self)
+        self.resume_field = ctk.CTkButton(self, text="Choose File", command=self.file_open)
+
+        self.interest_label.grid(row=0, column=0, padx=5, pady=5)
+        self.location_label.grid(row=1, column=0, padx=5, pady=5)
+        self.radius_label.grid(row=2, column=0, padx=5, pady=5)
+        self.no_of_jobs_label.grid(row=3, column=0, padx=5, pady=5)
+        self.resume_label.grid(row=4, column=0, padx=5, pady=5)
+        self.website_label.grid(row=5, column=0, padx=5, pady=5)
+
+        self.interest_field.grid(row=0, column=1, padx=5, pady=5)
+        self.location_field.grid(row=1, column=1, padx=5, pady=5)
+        self.radius_field.grid(row=2, column=1, padx=5, pady=5)
+        self.no_of_jobs_field.grid(row=3, column=1, padx=5, pady=5)
+        self.resume_field.grid(row=4, column=1, padx=5, pady=5)
+
+        ctk.CTkOptionMenu(self, variable=self.website_choice, values=self.website_choices).grid(row=5, column=1, padx=5, pady=5)
+
+        self.scrape_button = ctk.CTkButton(self, text="Scrape", command=self.scrape)
+        self.scrape_button.grid(row=6, column=1, padx=5, pady=5)
+
+        # getting the working root directory
+        self.directory = os.getcwd() + "/"
+        # creating the output directory if it does not exist
+        if not os.path.exists(self.directory + "/output"):
+            os.mkdir(self.directory + "/output")
+            print(f"Directory added at {self.directory + '/output'}")
+
+        self.csv_file_name = ""
+        self.personal_info = ""
+        self.jobs = []
+        self.resume_file = ""
+
+        self.mainloop()
 
     def scrape(self):
         """Scrapes job data from a website based on user input and saves it to a CSV file."""
+        self.scrape_button.configure(state="disabled", text="Scraping...")
         interest = self.interest_field.get().strip()
         location = self.location_field.get().strip()
         radius = int(self.radius_field.get())
@@ -49,7 +106,23 @@ class GUI:
 
         self.save_csv()
 
-        self.display_jobs()
+        JobWindow(self.jobs, self.directory)
+
+    def save_csv(self):
+        """Saves the scraped job data to a CSV file."""
+        with open(f"{self.directory}/output/{self.csv_file_name}", mode="w", encoding="utf8") as csv_file:
+            writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
+            writer.writerow(["TITLE", "COMPANY", "LOCATION", "LINK"])
+
+        for job in self.jobs:
+            job.write_to_file(f"{self.directory}/output/{self.csv_file_name}")
+
+    def file_open(self):
+        """Opens a file dialog to select a file."""
+        filename = filedialog.askopenfilename(initialdir=self.directory, title="Select a file", filetypes=(("PDF files", "*.pdf"), ("TXT files", "*.txt")))
+        if (os.path.basename(filename)) != "":
+            self.resume_field.configure(text=os.path.basename(filename))
+            self.resume_file = filename
 
     def extract_personal_info(self, resume_file):
         """Extracts personal information from a cover letter PDF or TXT file."""
@@ -67,42 +140,46 @@ class GUI:
         else:
             print("No resume selected!")
 
-    def display_jobs(self):
-        """Displays the scraped job data in a new window."""
-        self.job_window = Toplevel(self.master)
-        self.job_window.resizable(width=False, height=False)
-        self.job_window.title("Jobs")
 
-        Label(self.job_window, text="RESUME?").grid(row=0, column=0, padx=40, sticky="WE")
-        Label(self.job_window, text="TITLE").grid(row=0, column=1, padx=40, sticky="WE")
-        Label(self.job_window, text="COMPANY").grid(row=0, column=2, padx=40, sticky="WE")
-        Label(self.job_window, text="LOCATION").grid(row=0, column=3, padx=40, sticky="WE")
-        Label(self.job_window, text="LINK").grid(row=0, column=4, padx=40, sticky="WE")
+class JobWindow(ctk.CTkToplevel):
+    def __init__(self, jobs, directory):
+        super().__init__()
+        self.title("Jobs")
+        self.jobs = jobs
+        self.selected = []
+        self.directory = directory
+        self.personal_info = ""
+
+        self.resume_needed_label = ctk.CTkLabel(self, text="RESUME?")
+        self.title_label = ctk.CTkLabel(self, text="TITLE")
+        self.company_label = ctk.CTkLabel(self, text="COMPANY")
+        self.location_label = ctk.CTkLabel(self, text="LOCATION")
+        self.link_label = ctk.CTkLabel(self, text="LINK")
+
+        self.resume_needed_label.grid(row=0, column=0, padx=40, sticky="WE", pady=5)
+        self.title_label.grid(row=0, column=1, padx=40, sticky="WE", pady=5)
+        self.company_label.grid(row=0, column=2, padx=40, sticky="WE", pady=5)
+        self.location_label.grid(row=0, column=3, padx=40, sticky="WE", pady=5)
+        self.link_label.grid(row=0, column=4, padx=40, sticky="WE", pady=5)
+
 
 
         for idx, job in enumerate(self.jobs, start=0):
-            var = IntVar()
+            var = ctk.IntVar()
             self.selected.append(var)
-            Checkbutton(self.job_window, variable=var, cursor="hand2").grid(row=idx+1, column=0)
-            Label(self.job_window, text=job.job_title[0:30]+"...").grid(row=idx+1, column=1, sticky="W")
-            Label(self.job_window, text=job.job_company[0:30]+"...").grid(row=idx+1, column=2, sticky="W")
-            Label(self.job_window, text=job.job_location[0:30]+"...").grid(row=idx+1, column=3, sticky="W")
-            Button(self.job_window, text="Link", fg="blue", cursor="hand2", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4)
+            ctk.CTkCheckBox(self, variable=var, text="", width=30).grid(row=idx+1, column=0, padx=5, pady=5)
+            ctk.CTkLabel(self, text=job.job_title[0:30]+"...").grid(row=idx+1, column=1, sticky="W", padx=5, pady=5)
+            ctk.CTkLabel(self, text=job.job_company[0:30]+"...").grid(row=idx+1, column=2, sticky="W", padx=5, pady=5)
+            ctk.CTkLabel(self, text=job.job_location[0:30]+"...").grid(row=idx+1, column=3, sticky="W", padx=5, pady=5)
+            ctk.CTkButton(self, text="Link", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4, padx=5, pady=5)
 
-        Button(self.job_window, text="Generate", command=self.generate_letter, cursor="hand2").grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5, sticky="E")
-
-    def save_csv(self):
-        """Saves the scraped job data to a CSV file."""
-        with open(f"{self.directory}/output/{self.csv_file_name}", mode="w", encoding="utf8") as csv_file:
-            writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
-            writer.writerow(["TITLE", "COMPANY", "LOCATION", "LINK"])
-
-        for job in self.jobs:
-            job.write_to_file(f"{self.directory}/output/{self.csv_file_name}")
+        self.generate_button = ctk.CTkButton(self, text="Generate", command=self.generate_letter)
+        self.generate_button.grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5)
 
     def callback(self, link):
         """Opens a web browser with the provided link."""
         webbrowser.open_new(link)
+
 
     def start_gpt_generation_threaded(self, job, job_index, personal_info):
         """Generates a cover letter using GPT-3 for a specific job in a separate thread."""
@@ -115,6 +192,7 @@ class GUI:
 
     def generate_letter(self):
         """Generates cover letters for selected jobs using GPT-3."""
+        self.generate_button.configure(state="disabled", text="Generating...")
         threads = []
         for idx, job in enumerate(self.jobs, start=0):     
             if self.selected[idx].get() == 1:
@@ -124,61 +202,6 @@ class GUI:
         for thread in threads:
             thread.join()
 
-        showinfo("Success", "Cover letters generated! Find them in the output folder.")
-        self.job_window.destroy()
-
-    def file_open(self):
-        """Opens a file dialog to select a file."""
-        filename = filedialog.askopenfilename(initialdir=self.directory, title="Select a file", filetypes=(("PDF files", "*.pdf"), ("TXT files", "*.txt")))
-        if (os.path.basename(filename)) != "":
-            self.resume_field.config(text=os.path.basename(filename))
-            self.resume_file = filename
-
-
-    def __init__(self):
-        """Initializes the GUI and sets up the main window."""
-        self.master = Tk()
-        self.master.title("Job-Scraper")
-
-        self.website_choices = ["Stepstone", "Indeed"]
-        self.website_choice = StringVar(self.master)
-        self.website_choice.set(self.website_choices[0])
-
-        Label(self.master, text="Interest").grid(row=0)
-        Label(self.master, text="Location").grid(row=1)
-        Label(self.master, text="Radius").grid(row=2)
-        Label(self.master, text="#Jobs").grid(row=3)
-        Label(self.master, text="Resume").grid(row=4)
-        Label(self.master, text="Website").grid(row=5)
-
-        self.interest_field = Entry(self.master, cursor="xterm")
-        self.location_field = Entry(self.master, cursor="xterm")
-        self.radius_field = Entry(self.master, cursor="xterm")
-        self.no_of_jobs_field = Entry(self.master, cursor="xterm")
-        self.resume_field = Button(self.master, text="Choose File", command=self.file_open, cursor="hand2")
-
-        self.interest_field.grid(row=0, column=1)
-        self.location_field.grid(row=1, column=1)
-        self.radius_field.grid(row=2, column=1)
-        self.no_of_jobs_field.grid(row=3, column=1)
-        self.resume_field.grid(row=4, column=1)
-
-        OptionMenu(self.master, self.website_choice, *self.website_choices).grid(row=5, column=1, padx=5, pady=5)
-
-        Button(self.master, text="Scrape", command=self.scrape, cursor="hand2").grid(row=6, column=1, padx=5, pady=5, sticky="E")
-
-        # getting the working root directory
-        self.directory = os.getcwd() + "/"
-        # creating the output directory if it does not exist
-        if not os.path.exists(self.directory + "/output"):
-            os.mkdir(self.directory + "/output")
-            print(f"Directory added at {self.directory + '/output'}")
-
-        self.csv_file_name = ""
-        self.personal_info = ""
-        self.jobs = []
-        self.selected = []
-        self.resume_file = ""
-        self.job_window = None
-
-        mainloop()
+        CTkMessagebox(title="Success", message="Cover letters generated! Find them in the output folder.", \
+            icon="check")
+        self.destroy()
