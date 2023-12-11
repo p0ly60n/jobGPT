@@ -4,6 +4,9 @@
 
 This project scrapes Job websites like [`stepstone.de`](https://www.stepstone.de) or [`indeed.de`](https://de.indeed.com) for job listings matching the entered search criteria using Selenium and generates a Cover letter for them. The scraped information is then saved to a `.csv` file. You can select the jobs you want to have a cover letter generated to and the program then generates a cover letter for them with the job data. If a CV / Resume `.pdf`/`.txt` was submitted, it also extracts the personal information and therefore personalizes the cover letter texts.
 
+<img src="assets/query.png" alt="Query Window" width="20%"/>
+<img src="assets/job_selection.png" alt="Job Selection Window" width="60%"/>
+
 ## Installation
 
 This program requires tkinter and Python 3.6+
