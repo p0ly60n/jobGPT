@@ -7,8 +7,9 @@ This project scrapes Job websites like [`stepstone.de`](https://www.stepstone.de
 ## Installation
 
 This program requires tkinter and Python 3.6+
-1. Install the required packages using the command [`pip install -r requirements.txt`](requirements.txt).
-2. Rename the file [`config_default.cfg`](config_default.cfg) to `config.cfg` and insert your OpenAI API key under [`api_key`](config_default.cfg). Also change the used GPT-Model to the one you like (e.g. gpt-3.5-turbo [default], gpt-4)
+1) Clone this repository
+2) Install the required packages using the command [`pip install -r requirements.txt`](requirements.txt).
+3) Rename the file [`config_default.cfg`](config_default.cfg) to `config.cfg` and insert your OpenAI API key under [`api_key`](config_default.cfg). Also change the used GPT-Model to the one you like (e.g. gpt-3.5-turbo [default], gpt-4)
 
 ## Usage
 
