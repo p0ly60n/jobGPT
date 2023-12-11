@@ -1,4 +1,6 @@
-from tkinter import *
+from tkinter import Tk, Label, Entry, Button, OptionMenu, Toplevel, Checkbutton, StringVar, IntVar, mainloop
+from tkinter import filedialog
+from tkinter.messagebox import showinfo
 
 import csv
 import os
@@ -9,15 +11,14 @@ import webbrowser
 import src.scraper as scraper
 import src.gpt as gpt
 from src.job import Job
-from tkinter import filedialog
 
 class GUI:
     """A graphical user interface for a job scraper and cover letter generator."""
 
     def scrape(self):
         """Scrapes job data from a website based on user input and saves it to a CSV file."""
-        interest = self.interest_field.get().strip().replace(" ", "%20")
-        location = self.location_field.get().strip().replace(" ", "%20")
+        interest = self.interest_field.get().strip()
+        location = self.location_field.get().strip()
         radius = int(self.radius_field.get())
         no_of_jobs = int(self.no_of_jobs_field.get())
         resume_file = self.resume_file
@@ -29,10 +30,15 @@ class GUI:
 
         # create a scraper object based on the user's choice
         website_scraper = None
-        match self.website_choice.get():
-            case "Stepstone": website_scraper = scraper.StepstoneScraper(interest, location, radius, no_of_jobs)
-            case "Indeed": website_scraper = scraper.IndeedScraper(interest, location, radius, no_of_jobs)
-            case _: print("Website not supported yet, edit gui.py!")
+        choice = self.website_choice.get()
+        if (choice == "Stepstone"):
+            website_scraper = scraper.StepstoneScraper(interest.replace(" ", "%20"), \
+            location.replace(" ", "%20"), radius, no_of_jobs)
+        elif (choice == "Indeed"):
+            website_scraper = scraper.IndeedScraper(interest.replace(" ", "%20"), \
+            location.replace(" ", "%20"), radius, no_of_jobs)
+        else:
+            print("Website not supported yet, edit gui.py!")
 
         # run the scraper to extract the job data from the website
         self.jobs = website_scraper.scrape()
@@ -63,27 +69,27 @@ class GUI:
 
     def display_jobs(self):
         """Displays the scraped job data in a new window."""
-        job_window = Toplevel(self.master)
-        job_window.resizable(width=False, height=False)
-        job_window.title("Jobs")
+        self.job_window = Toplevel(self.master)
+        self.job_window.resizable(width=False, height=False)
+        self.job_window.title("Jobs")
 
-        Label(job_window, text="RESUME?").grid(row=0, column=0, padx=40, sticky="WE")
-        Label(job_window, text="TITLE").grid(row=0, column=1, padx=40, sticky="WE")
-        Label(job_window, text="COMPANY").grid(row=0, column=2, padx=40, sticky="WE")
-        Label(job_window, text="LOCATION").grid(row=0, column=3, padx=40, sticky="WE")
-        Label(job_window, text="LINK").grid(row=0, column=4, padx=40, sticky="WE")
+        Label(self.job_window, text="RESUME?").grid(row=0, column=0, padx=40, sticky="WE")
+        Label(self.job_window, text="TITLE").grid(row=0, column=1, padx=40, sticky="WE")
+        Label(self.job_window, text="COMPANY").grid(row=0, column=2, padx=40, sticky="WE")
+        Label(self.job_window, text="LOCATION").grid(row=0, column=3, padx=40, sticky="WE")
+        Label(self.job_window, text="LINK").grid(row=0, column=4, padx=40, sticky="WE")
 
 
         for idx, job in enumerate(self.jobs, start=0):
             var = IntVar()
             self.selected.append(var)
-            Checkbutton(job_window, variable=var).grid(row=idx+1, column=0)
-            Label(job_window, text=job.job_title[0:30]+"...").grid(row=idx+1, column=1, sticky="W")
-            Label(job_window, text=job.job_company[0:30]+"...").grid(row=idx+1, column=2, sticky="W")
-            Label(job_window, text=job.job_location[0:30]+"...").grid(row=idx+1, column=3, sticky="W")
-            Button(job_window, text="Link", fg="blue", cursor="hand2", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4)
+            Checkbutton(self.job_window, variable=var, cursor="hand2").grid(row=idx+1, column=0)
+            Label(self.job_window, text=job.job_title[0:30]+"...").grid(row=idx+1, column=1, sticky="W")
+            Label(self.job_window, text=job.job_company[0:30]+"...").grid(row=idx+1, column=2, sticky="W")
+            Label(self.job_window, text=job.job_location[0:30]+"...").grid(row=idx+1, column=3, sticky="W")
+            Button(self.job_window, text="Link", fg="blue", cursor="hand2", command=lambda link=job.job_link: self.callback(link)).grid(row=idx+1, column=4)
 
-        Button(job_window, text="Generate", command=self.generate_letter).grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5, sticky="E")
+        Button(self.job_window, text="Generate", command=self.generate_letter, cursor="hand2").grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5, sticky="E")
 
     def save_csv(self):
         """Saves the scraped job data to a CSV file."""
@@ -118,6 +124,9 @@ class GUI:
         for thread in threads:
             thread.join()
 
+        showinfo("Success", "Cover letters generated! Find them in the output folder.")
+        self.job_window.destroy()
+
     def file_open(self):
         """Opens a file dialog to select a file."""
         filename = filedialog.askopenfilename(initialdir=self.directory, title="Select a file", filetypes=(("PDF files", "*.pdf"), ("TXT files", "*.txt")))
@@ -142,11 +151,11 @@ class GUI:
         Label(self.master, text="Resume").grid(row=4)
         Label(self.master, text="Website").grid(row=5)
 
-        self.interest_field = Entry(self.master)
-        self.location_field = Entry(self.master)
-        self.radius_field = Entry(self.master)
-        self.no_of_jobs_field = Entry(self.master)
-        self.resume_field = Button(self.master, text="Choose File", command=self.file_open)
+        self.interest_field = Entry(self.master, cursor="xterm")
+        self.location_field = Entry(self.master, cursor="xterm")
+        self.radius_field = Entry(self.master, cursor="xterm")
+        self.no_of_jobs_field = Entry(self.master, cursor="xterm")
+        self.resume_field = Button(self.master, text="Choose File", command=self.file_open, cursor="hand2")
 
         self.interest_field.grid(row=0, column=1)
         self.location_field.grid(row=1, column=1)
@@ -156,7 +165,7 @@ class GUI:
 
         OptionMenu(self.master, self.website_choice, *self.website_choices).grid(row=5, column=1, padx=5, pady=5)
 
-        Button(self.master, text="Scrape", command=self.scrape).grid(row=6, column=1, padx=5, pady=5, sticky="E")
+        Button(self.master, text="Scrape", command=self.scrape, cursor="hand2").grid(row=6, column=1, padx=5, pady=5, sticky="E")
 
         # getting the working root directory
         self.directory = os.getcwd() + "/"
@@ -170,5 +179,6 @@ class GUI:
         self.jobs = []
         self.selected = []
         self.resume_file = ""
+        self.job_window = None
 
         mainloop()
