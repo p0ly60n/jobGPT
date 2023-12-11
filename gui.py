@@ -46,12 +46,20 @@ class GUI:
         self.display_jobs()
 
     def extract_personal_info(self, resume_file):
-        """Extracts personal information from a cover letter PDF file."""
+        """Extracts personal information from a cover letter PDF or TXT file."""
         # if a resume is available, extract the text from it
         if (resume_file != ""):
-            reader = PdfReader(resume_file)
-            for page in reader.pages:
-                self.personal_info += page.extract_text()
+            if (os.path.splitext(resume_file)[1] == ".txt"):
+                with open(resume_file, mode="r", encoding="utf8") as txt_file:
+                    self.personal_info = txt_file.read()
+            elif (os.path.splitext(resume_file)[1] == ".pdf"):
+                reader = PdfReader(resume_file)
+                for page in reader.pages:
+                    self.personal_info += page.extract_text()
+            else:
+                print("File format not supported yet, edit gui.py!")
+        else:
+            print("No resume selected!")
 
     def display_jobs(self):
         """Displays the scraped job data in a new window."""
@@ -112,9 +120,10 @@ class GUI:
 
     def file_open(self):
         """Opens a file dialog to select a file."""
-        filename = filedialog.askopenfilename(initialdir=self.directory, title="Select a file", filetypes=(("PDF files", "*.pdf"), ("all files", "*.*")))
-        self.resume_field.config(text=os.path.basename(filename))
-        self.resume_file = filename
+        filename = filedialog.askopenfilename(initialdir=self.directory, title="Select a file", filetypes=(("PDF files", "*.pdf"), ("TXT files", "*.txt")))
+        if (os.path.basename(filename)) != "":
+            self.resume_field.config(text=os.path.basename(filename))
+            self.resume_file = filename
 
 
     def __init__(self):
