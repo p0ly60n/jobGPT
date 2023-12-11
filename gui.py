@@ -73,7 +73,7 @@ class App(ctk.CTk):
 
     def scrape(self):
         """Scrapes job data from a website based on user input and saves it to a CSV file."""
-        self.scrape_button.configure(state="disabled", text="Scraping...")
+        #self.scrape_button.configure(state="disabled", text="Scraping...")
         interest = self.interest_field.get().strip()
         location = self.location_field.get().strip()
         radius = int(self.radius_field.get())
@@ -192,7 +192,7 @@ class JobWindow(ctk.CTkToplevel):
 
     def generate_letter(self):
         """Generates cover letters for selected jobs using GPT-3."""
-        self.generate_button.configure(state="disabled", text="Generating...")
+        #self.generate_button.configure(state="disabled", text="Generating...")
         threads = []
         for idx, job in enumerate(self.jobs, start=0):     
             if self.selected[idx].get() == 1:
