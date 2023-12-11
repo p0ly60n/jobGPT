@@ -18,7 +18,7 @@ Run the [`main.py`](main.py) script to start the project and input the needed in
 
 This tool scrapes german websites and also generates german cover letters. If you want this tool to use your native language feel free to edit the starting-prompt at [`src/gpt.py`](/src/gpt.py) and the website Scraping Classes at [`src/scraper.py`](/src/scraper.py).
 
-You can also add other non-included websites by adding a new class to [`src/scraper.py`](/src/scraper.py) that extends the abstract class `Scraper`. To do that implement the following methods:
+You can also add other not yet supported websites by creating a new class in [`src/scraper.py`](/src/scraper.py) that extends the abstract class `Scraper`. To do that implement the following methods:
 - `BASE_URL` -> class-attribute which is the main domain of your website (e.g. https://www.stepstone.de)
 - `get_display_url` -> method for calculating the url of all joblistings for each page-index
 - `get_job_urls` -> method for retrieving link to the job descriptions for each job
