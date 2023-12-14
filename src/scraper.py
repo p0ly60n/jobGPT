@@ -1,12 +1,11 @@
 import os
+from abc import ABC, abstractmethod
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 
-from abc import ABC, abstractmethod
-
-from src.job import Job
 from selenium.common.exceptions import NoSuchElementException
+from src.job import Job
 
 
 class Scraper (ABC):
