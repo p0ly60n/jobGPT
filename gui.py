@@ -8,9 +8,14 @@ import customtkinter as ctk
 from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
 from pypdf import PdfReader
+from openai import AuthenticationError
+import subprocess
+
+from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
 import src.scraper as scraper
 import src.gpt as gpt
+from src.job import Job
 
 class App(ctk.CTk):
     """A graphical user interface for a job scraper and cover letter generator."""
@@ -58,11 +63,12 @@ class App(ctk.CTk):
         self.scrape_button.grid(row=6, column=1, padx=5, pady=5)
 
         # getting the working root directory
-        self.directory = os.getcwd() + "/"
+        self.directory = os.getcwd()
+        self.output_directory = os.path.join(self.directory, "output")
         # creating the output directory if it does not exist
-        if not os.path.exists(self.directory + "/output"):
-            os.mkdir(self.directory + "/output")
-            print(f"Directory added at {self.directory + '/output'}")
+        if not os.path.exists(self.output_directory):
+            os.mkdir(self.output_directory)
+            print(f"Directory added at {self.output_directory}")
 
         self.csv_file_name = ""
         self.personal_info = ""
@@ -76,8 +82,12 @@ class App(ctk.CTk):
         #self.scrape_button.configure(state="disabled", text="Scraping...")
         interest = self.interest_field.get().strip()
         location = self.location_field.get().strip()
-        radius = int(self.radius_field.get())
-        no_of_jobs = int(self.no_of_jobs_field.get())
+        try:
+            radius = int(self.radius_field.get())
+            no_of_jobs = int(self.no_of_jobs_field.get())
+        except ValueError:
+            CTkMessagebox(title="Error", message="Please enter a valid number!", icon="error")
+            return
         resume_file = self.resume_file
 
         print(f"\nExtracting data of {resume_file}...\n")
@@ -98,7 +108,17 @@ class App(ctk.CTk):
             print("Website not supported yet, edit gui.py!")
 
         # run the scraper to extract the job data from the website
-        self.jobs = website_scraper.scrape()
+        try:
+            self.jobs = website_scraper.scrape()
+        except NoSuchElementException:
+            CTkMessagebox(title="Error", message="Reading of one job element failed", icon="error")
+            return
+        except TimeoutException:
+            CTkMessagebox(title="Error", message="Connection to the website failed", icon="error")
+            return
+        except Exception as e:
+            CTkMessagebox(title="Error", message=f"An unknown error occured: {e}", icon="error")
+            return
 
         print("\nScraping done!\n")
 
@@ -106,16 +126,16 @@ class App(ctk.CTk):
 
         self.save_csv()
 
-        JobWindow(self.jobs, self.directory)
+        JobWindow(self.jobs, self.output_directory, self.personal_info)
 
     def save_csv(self):
         """Saves the scraped job data to a CSV file."""
-        with open(f"{self.directory}/output/{self.csv_file_name}", mode="w", encoding="utf8") as csv_file:
+        with open(os.path.join(self.output_directory, self.csv_file_name), mode="w", encoding="utf8") as csv_file:
             writer = csv.writer(csv_file, delimiter=",", lineterminator="\n")
             writer.writerow(["TITLE", "COMPANY", "LOCATION", "LINK"])
 
         for job in self.jobs:
-            job.write_to_file(f"{self.directory}/output/{self.csv_file_name}")
+            job.write_to_file(os.path.join(self.output_directory, self.csv_file_name))
 
     def file_open(self):
         """Opens a file dialog to select a file."""
@@ -124,7 +144,7 @@ class App(ctk.CTk):
             self.resume_field.configure(text=os.path.basename(filename))
             self.resume_file = filename
 
-    def extract_personal_info(self, resume_file):
+    def extract_personal_info(self, resume_file: str):
         """Extracts personal information from a cover letter PDF or TXT file."""
         # if a resume is available, extract the text from it
         if (resume_file != ""):
@@ -140,15 +160,14 @@ class App(ctk.CTk):
         else:
             print("No resume selected!")
 
-
 class JobWindow(ctk.CTkToplevel):
-    def __init__(self, jobs, directory):
+    def __init__(self, jobs: Job, output_directory: str, personal_info: str=""):
         super().__init__()
         self.title("Jobs")
         self.jobs = jobs
         self.selected = []
-        self.directory = directory
-        self.personal_info = ""
+        self.output_directory = output_directory
+        self.personal_info = personal_info
 
         self.resume_needed_label = ctk.CTkLabel(self, text="RESUME?")
         self.title_label = ctk.CTkLabel(self, text="TITLE")
@@ -176,16 +195,23 @@ class JobWindow(ctk.CTkToplevel):
         self.generate_button = ctk.CTkButton(self, text="Generate", command=self.generate_letter, fg_color="green", hover_color="dark green")
         self.generate_button.grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5)
 
-    def callback(self, link):
+    def callback(self, link: str):
         """Opens a web browser with the provided link."""
         webbrowser.open_new(link)
 
 
-    def start_gpt_generation_threaded(self, job, job_index, personal_info):
+    def start_gpt_generation_threaded(self, job: Job, job_index: int, personal_info: str):
         """Generates a cover letter using GPT-3 for a specific job in a separate thread."""
-        with open(f"{self.directory}/output/job{job_index}@{job.job_company}.txt", mode="w", encoding="utf8") as txt_file:
+        with open(os.path.join(self.output_directory, f"job{job_index}@{job.job_company}.txt"), mode="w", encoding="utf8") as txt_file:
             # get the resume
-            gpt_data = gpt.get_letter(job, personal_info)
+            try:
+                gpt_data = gpt.get_letter(job, personal_info)
+            except AuthenticationError:
+                CTkMessagebox(title="Error", message="Authentication failed, try to check your api_key", icon="error")
+                return
+            except Exception as e:
+                CTkMessagebox(title="Error", message=f"An unknown error occured: {e}", icon="error")
+                return
             txt_file.write(gpt_data["message"])
             print(f"Cover-Letter for job{job_index} ({job}) generated!")
             print(f"-> Tokens: in:{gpt_data['input_tokens']}, out:{gpt_data['output_tokens']}")
@@ -194,14 +220,20 @@ class JobWindow(ctk.CTkToplevel):
         """Generates cover letters for selected jobs using GPT-3."""
         #self.generate_button.configure(state="disabled", text="Generating...")
         threads = []
-        for idx, job in enumerate(self.jobs, start=0):     
-            if self.selected[idx].get() == 1:
-                threads.append(Thread(target=self.start_gpt_generation_threaded, args=(job, idx, self.personal_info)))
-        for thread in threads:
-            thread.start()
-        for thread in threads:
-            thread.join()
+        amount_selected = 0
 
-        CTkMessagebox(title="Success", message="Cover letters generated! Find them in the output folder.", \
-            icon="check")
-        self.destroy()
+        while (amount_selected == 0):
+            for idx, job in enumerate(self.jobs, start=0):
+                if self.selected[idx].get() == 1:
+                    threads.append(Thread(target=self.start_gpt_generation_threaded, args=(job, idx, self.personal_info)))
+                    amount_selected += 1
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+            msg = CTkMessagebox(title="Success", message="Cover letters generated! Find them in the output folder.", \
+                icon="check", option_1="Open Folder", option_2="Thanks")
+            if (msg == "Open Folder"):
+                subprocess.run(['open', self.output_directory], check=True)
+                    
+            self.destroy()
