@@ -2,6 +2,7 @@
 import webbrowser
 import csv
 import os
+import subprocess
 from threading import Thread
 
 import customtkinter as ctk
@@ -9,7 +10,6 @@ from customtkinter import filedialog
 from CTkMessagebox import CTkMessagebox
 from pypdf import PdfReader
 from openai import AuthenticationError
-import subprocess
 
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 
