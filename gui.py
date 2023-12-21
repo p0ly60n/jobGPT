@@ -80,7 +80,6 @@ class App(ctk.CTk):
 
     def scrape(self):
         """Scrapes job data from a website based on user input and saves it to a CSV file."""
-        #self.scrape_button.configure(state="disabled", text="Scraping...")
         interest = self.interest_field.get().strip()
         location = self.location_field.get().strip()
         try:
@@ -109,16 +108,20 @@ class App(ctk.CTk):
             print("Website not supported yet, edit gui.py!")
 
         # run the scraper to extract the job data from the website
-        try:
-            self.jobs = website_scraper.scrape()
-        except NoSuchElementException:
-            CTkMessagebox(title="Error", message="Reading of one job element failed", icon="error")
-            return
-        except TimeoutException:
-            CTkMessagebox(title="Error", message="Connection to the website failed", icon="error")
-            return
-        except Exception as e:
-            CTkMessagebox(title="Error", message=f"An unknown error occured: {e}", icon="error")
+        if website_scraper is not None:
+            try:
+                self.jobs = website_scraper.scrape()
+            except NoSuchElementException:
+                CTkMessagebox(title="Error", message="Reading of one job element failed", icon="error")
+                return
+            except TimeoutException:
+                CTkMessagebox(title="Error", message="Connection to the website failed", icon="error")
+                return
+            except Exception as e:
+                CTkMessagebox(title="Error", message=f"An unknown error occurred: {e}", icon="error")
+                return
+        else:
+            CTkMessagebox(title="Error", message="Website scraper is not initialized", icon="error")
             return
 
         print("\nScraping done!\n")
@@ -162,10 +165,10 @@ class App(ctk.CTk):
             print("No resume selected!")
 
 class JobWindow(ctk.CTkToplevel):
-    def __init__(self, jobs: Job, output_directory: str, personal_info: str=""):
+    def __init__(self, jobs: list[Job], output_directory: str, personal_info: str=""):
         super().__init__()
         self.title("Jobs")
-        self.grid_columnconfigure(0, minsize=1000, weight=1)
+        self.grid_columnconfigure(0, minsize=200, weight=1)
         self.grid_rowconfigure(0, minsize=400, weight=1)
 
         self.jobs = jobs
@@ -187,8 +190,6 @@ class JobWindow(ctk.CTkToplevel):
         self.location_label.grid(row=0, column=3, padx=40, sticky="WE", pady=5)
         self.link_label.grid(row=0, column=4, padx=40, sticky="WE", pady=5)
 
-
-
         for idx, job in enumerate(self.jobs, start=0):
             var = ctk.IntVar()
             self.selected.append(var)
@@ -202,7 +203,12 @@ class JobWindow(ctk.CTkToplevel):
         self.generate_button.grid(row=len(self.jobs) + 1, column=4, padx=5, pady=5)
 
         self.frame.grid(row=0, column=0, sticky="nsew")
-        print()
+
+        # update the window size to fit the frame
+        self.update_idletasks()
+        width = self.frame.winfo_reqwidth()
+        height = self.winfo_height()
+        self.geometry(f'{width+20}x{height}')
 
     def callback(self, link: str):
         """Opens a web browser with the provided link."""
@@ -227,7 +233,6 @@ class JobWindow(ctk.CTkToplevel):
 
     def generate_letter(self):
         """Generates cover letters for selected jobs using GPT-3."""
-        #self.generate_button.configure(state="disabled", text="Generating...")
         threads = []
         amount_selected = 0
 
